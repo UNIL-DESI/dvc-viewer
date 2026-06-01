@@ -229,28 +229,19 @@ function install_viewer() {
     echo "📦 Installing/Updating dvc-viewer..."
     if command -v uv >/dev/null 2>&1; then
         if [ -n "${VIRTUAL_ENV:-}" ]; then
-            uv pip install --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git || true
+            uv pip install --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git
         else
-            uv pip install --system --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git || true
+            uv pip install --system --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git
         fi
     else
-        if command -v pip >/dev/null 2>&1; then
-            pip install --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git || true
-        elif command -v python3 >/dev/null 2>&1 && python3 -m pip --version >/dev/null 2>&1; then
-            python3 -m pip install --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git || true
-        elif command -v python >/dev/null 2>&1 && python -m pip --version >/dev/null 2>&1; then
-            python -m pip install --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git || true
-        else
-            echo "⚠️  Neither uv, pip, nor python with pip found. Skipping dvc-viewer update."
-            return 0
-        fi
+        pip install --quiet --upgrade git+https://github.com/hjamet/dvc-viewer.git
     fi
 }
 
 if ! command -v dvc-viewer >/dev/null 2>&1; then
-    install_viewer || true
+    install_viewer
 elif [ "${CI:-}" = "true" ] || [ "${DVC_VIEWER_AUTO_UPDATE:-}" = "true" ] || [ "${DVC_VIEWER_AUTO_UPDATE:-}" = "1" ]; then
-    install_viewer || true
+    install_viewer
 fi
 """
     if not bootstrap_script.exists() or bootstrap_script.read_text(encoding="utf-8") != bootstrap_content:

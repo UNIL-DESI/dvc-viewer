@@ -384,7 +384,7 @@ def compute_per_file_hashes(
                         to_process.append(imported)
 
     hashes = {}
-    for path in file_paths:
+    for path in sorted(list(file_paths)):
         try:
             rel_path = path.relative_to(project_root).as_posix()
         except ValueError:

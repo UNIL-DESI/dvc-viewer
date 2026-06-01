@@ -153,7 +153,7 @@ def _update_stage_hash(
             print(f"   {YELLOW}⚠️  Stage '{name}' invalidated by code change:{RESET}")
             
             # Simple string representation of graph for the chain finder
-            str_graph = {str(k.relative_to(project_dir)): [str(v.relative_to(project_dir)) for v in vs] 
+            str_graph = {str(k.relative_to(project_dir)): sorted([str(v.relative_to(project_dir)) for v in vs])
                          for k, vs in import_graph.items()}
             entry_rel = str(script_path.relative_to(project_dir))
             
@@ -179,10 +179,10 @@ def _update_stage_hash(
     new_manifest = {
         "aggregate_hash": code_hash,
         "file_hashes": file_hashes,
-        "import_graph": {str(k.relative_to(project_dir)): [str(v.relative_to(project_dir)) for v in vs] 
+        "import_graph": {str(k.relative_to(project_dir)): sorted([str(v.relative_to(project_dir)) for v in vs])
                          for k, vs in import_graph.items()}
     }
-    manifest_path.write_text(json.dumps(new_manifest, indent=2), encoding="utf-8")
+    manifest_path.write_text(json.dumps(new_manifest, indent=2, sort_keys=True), encoding="utf-8")
     
     return code_hash
 

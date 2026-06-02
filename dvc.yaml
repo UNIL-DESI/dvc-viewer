@@ -1,16 +1,14 @@
 stages:
-  tests:
-    cmd: PYTHONPATH=. uv run pytest tests/ -v
+  dvc-code-analysis:
+    cmd: bash .dvc-viewer/bootstrap.sh && dvc-viewer hash
     always_changed: true
-
+    outs:
+    - .dvc-viewer/hashes: {cache: false}
+  tests: {cmd: PYTHONPATH=. uv run pytest tests/ -v, always_changed: true}
   generate_fake_output:
     cmd: echo "Fake research output generated at $(date)" > fake_output.txt
     always_changed: true
-    outs:
-      - fake_output.txt
-
+    outs: [fake_output.txt]
   verify_gdrive_sync:
     cmd: python3 scripts/verify_gdrive.py
-    deps:
-      - fake_output.txt
-      - scripts/verify_gdrive.py
+    deps: [fake_output.txt, scripts/verify_gdrive.py, .dvc-viewer/hashes/verify_gdrive_sync.hash]

@@ -1,0 +1,34 @@
+{
+  "aggregate_hash": "ff81ac30cefd6985fbfbb9884f05153c24065c81a51579ce442cc86136a8c823",
+  "file_hashes": {
+    "dvc_viewer/cli.py": "62db21cf7e12a7978639ffb938acefd3a24f635d80c8122f2376550182dc1319",
+    "dvc_viewer/gdrive.py": "54175376e802f5d01bcec6a2abb1fd7d8d0855cfe87efb3e629b6f076e2bc528",
+    "dvc_viewer/hasher.py": "8d0871e691ab10a5762f23cd12fa5f7b3d724a28f665b1ecf096429be722fb18",
+    "scripts/verify_gdrive.py": "821f8ed3695c9faeddc738729d17c79178cee3b39884eafbd3dcde17f52b6d01",
+    "dvc_viewer/utils.py": "26bc1381e949ba60965d72dc8ee6f9d3c1044e2d848eab03635d2362348c5fc0",
+    "dvc_viewer/updater.py": "0ffe46f45e28f28886f46a604ff120c84dc55886ea40655cfff95075db310445",
+    "dvc_viewer/dvc_client.py": "d1b15d6ee08ca20fed96072f59821fd4acb14318a33a95615819f31ee65d1181"
+  },
+  "import_graph": {
+    "scripts\\verify_gdrive.py": [
+      "dvc_viewer\\cli.py",
+      "dvc_viewer\\dvc_client.py",
+      "dvc_viewer\\utils.py"
+    ],
+    "dvc_viewer\\utils.py": [],
+    "dvc_viewer\\dvc_client.py": [],
+    "dvc_viewer\\cli.py": [
+      "dvc_viewer\\dvc_client.py",
+      "dvc_viewer\\gdrive.py",
+      "dvc_viewer\\utils.py",
+      "dvc_viewer\\updater.py"
+    ],
+    "dvc_viewer\\updater.py": [
+      "dvc_viewer\\hasher.py"
+    ],
+    "dvc_viewer\\hasher.py": [],
+    "dvc_viewer\\gdrive.py": [
+      "dvc_viewer\\utils.py"
+    ]
+  }
+}

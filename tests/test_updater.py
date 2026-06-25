@@ -37,3 +37,46 @@ def test_resolve_foreach_items_unresolved_warning(tmp_path, capsys):
     
     captured = capsys.readouterr()
     assert "⚠️ Warning: Could not resolve foreach items '${missing}'" in captured.err
+
+
+def test_update_dvc_yaml_with_dynamic_foreach_script(tmp_path):
+    """Should correctly resolve dynamic script paths in foreach loop and generate hashes."""
+    from dvc_viewer.updater import update_dvc_yaml
+    
+    # Create the dynamic script files
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "download_movielens.py").write_text("print('movielens')")
+    (tmp_path / "scripts" / "download_lastfm.py").write_text("print('lastfm')")
+    
+    # Create dvc.yaml
+    dvc_content = {
+        "vars": [
+            {"datasets": ["movielens", "lastfm"]}
+        ],
+        "stages": {
+            "download": {
+                "foreach": "${datasets}",
+                "do": {
+                    "cmd": "python3 scripts/download_${item}.py",
+                    "deps": [
+                        "scripts/download_${item}.py"
+                    ]
+                }
+            }
+        }
+    }
+    with open(tmp_path / "dvc.yaml", "w") as f:
+        yaml.dump(dvc_content, f)
+        
+    update_dvc_yaml(tmp_path)
+    
+    # Check that hashes were generated for each variant
+    hash_dir = tmp_path / ".dvc-viewer" / "hashes"
+    assert (hash_dir / "download@movielens.hash").exists()
+    assert (hash_dir / "download@lastfm.hash").exists()
+    
+    # Read the hashes and check that they are correct hashes for the respective files
+    hash_movielens = (hash_dir / "download@movielens.hash").read_text(encoding="utf-8")
+    hash_lastfm = (hash_dir / "download@lastfm.hash").read_text(encoding="utf-8")
+    assert hash_movielens != hash_lastfm  # they are different scripts, so hashes should differ!
+

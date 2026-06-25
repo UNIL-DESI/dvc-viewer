@@ -283,23 +283,59 @@ fi
             cmd = do_block.get("cmd", "")
             script_path = _find_script_in_cmd(cmd, project_dir)
             
+            iterable = []
+            if isinstance(items, list):
+                iterable = [(None, item) for item in items]
+            elif isinstance(items, dict):
+                iterable = list(items.items())
+            
+            hash_generated = False
+            
             if script_path:
-                # We use the generic stage name for hashing foreach scripts
-                # because they usually all point to the SAME script.
+                # Case A: A single static script for all variants
                 code_hash = _update_stage_hash(name, script_path, project_dir, hash_dir)
-                
-                iterable = []
-                if isinstance(items, list):
-                    iterable = [(None, item) for item in items]
-                elif isinstance(items, dict):
-                    iterable = list(items.items())
-                
                 for key, item in iterable:
                     suffix = str(key if key is not None else item)
                     expanded_name = f"{name}@{suffix}"
                     hash_file_path = hash_dir / f"{expanded_name}.hash"
                     hash_file_path.write_text(code_hash, encoding="utf-8")
-                
+                hash_generated = True
+            else:
+                # Case B: The command contains variables, so the script might be dynamic
+                import re
+                for key, item in iterable:
+                    suffix = str(key if key is not None else item)
+                    
+                    # Interpolate the command for this specific variant
+                    resolved_cmd = cmd
+                    if "${item}" in resolved_cmd:
+                        resolved_cmd = resolved_cmd.replace("${item}", str(item))
+                    if key is not None and "${key}" in resolved_cmd:
+                        resolved_cmd = resolved_cmd.replace("${key}", str(key))
+                        
+                    def _replace_match(match):
+                        var_type = match.group(1)
+                        attr = match.group(2)
+                        attr_name = attr.lstrip(".")
+                        val = item if var_type == "item" else key
+                        if isinstance(val, dict):
+                            return str(val.get(attr_name, match.group(0)))
+                        try:
+                            return str(getattr(val, attr_name))
+                        except Exception:
+                            return match.group(0)
+                            
+                    resolved_cmd = re.sub(r'\$\{(item|key)(\.[^}]+)\}', _replace_match, resolved_cmd)
+                    
+                    v_script_path = _find_script_in_cmd(resolved_cmd, project_dir)
+                    if v_script_path:
+                        expanded_name = f"{name}@{suffix}"
+                        v_code_hash = _update_stage_hash(expanded_name, v_script_path, project_dir, hash_dir)
+                        hash_file_path = hash_dir / f"{expanded_name}.hash"
+                        hash_file_path.write_text(v_code_hash, encoding="utf-8")
+                        hash_generated = True
+            
+            if hash_generated:
                 var_name = "key" if isinstance(items, dict) else "item"
                 hash_dep = f".dvc-viewer/hashes/{name}@${{{var_name}}}.hash"
                 

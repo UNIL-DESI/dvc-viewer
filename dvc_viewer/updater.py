@@ -65,26 +65,21 @@ def _find_script_in_cmd(cmd: str, project_dir: Path) -> Path | None:
     return None
 
 
-def _resolve_foreach_items(items: Any, project_dir: Path) -> Any:
-    """Resolve ${var} from params.yaml if items is a string variable reference."""
+def _resolve_foreach_items(items: Any, project_dir: Path, dvc_data: dict | None = None) -> Any:
+    """Resolve ${var} using params.yaml and vars section in dvc.yaml."""
     if isinstance(items, str) and items.strip().startswith("${") and items.strip().endswith("}"):
-        var_name = items.strip()[2:-1]  # remove ${ and }
-        params_path = project_dir / "params.yaml"
-        if params_path.exists():
-            try:
-                with open(params_path, "r") as f:
-                    params = yaml.safe_load(f) or {}
-                # Handle nested keys e.g. ${foo.bar}
-                val = params
-                for part in var_name.split("."):
-                    if isinstance(val, dict) and part in val:
-                        val = val[part]
-                    else:
-                        return items # Failed to resolve
-                return val
-            except Exception:
-                return items
+        try:
+            from .parser import _load_params, _resolve_interpolation
+            params = _load_params(project_dir, dvc_data or {})
+            resolved = _resolve_interpolation(items, params)
+            if resolved == items:
+                print(f"⚠️ Warning: Could not resolve foreach items '{items}' using params.yaml or dvc.yaml vars.", file=sys.stderr)
+            return resolved
+        except Exception as e:
+            print(f"⚠️ Warning: Exception while resolving foreach items '{items}': {e}", file=sys.stderr)
+            return items
     return items
+
 
 
 def _get_untracked_files(files: list[str], project_dir: Path) -> set[str]:
@@ -282,7 +277,7 @@ fi
         # Handle foreach
         if "foreach" in stage and "do" in stage:
             items = stage["foreach"]
-            items = _resolve_foreach_items(items, project_dir)
+            items = _resolve_foreach_items(items, project_dir, config)
             do_block = stage["do"]
             
             cmd = do_block.get("cmd", "")

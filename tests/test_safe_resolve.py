@@ -3,12 +3,21 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 # Mock dependencies before importing server
-sys.modules["fastapi"] = MagicMock()
-sys.modules["fastapi.responses"] = MagicMock()
-sys.modules["fastapi.staticfiles"] = MagicMock()
-sys.modules["yaml"] = MagicMock()
+orig_modules = {}
+for mod in ["fastapi", "fastapi.responses", "fastapi.staticfiles", "yaml"]:
+    if mod in sys.modules:
+        orig_modules[mod] = sys.modules[mod]
+    sys.modules[mod] = MagicMock()
 
 from dvc_viewer.server import _safe_resolve
+
+# Restore original modules to prevent contamination of other tests
+for mod in ["fastapi", "fastapi.responses", "fastapi.staticfiles", "yaml"]:
+    if mod in orig_modules:
+        sys.modules[mod] = orig_modules[mod]
+    else:
+        del sys.modules[mod]
+
 
 def test_safe_resolve_happy_path(tmp_path):
     """Test that a valid relative path is correctly resolved."""

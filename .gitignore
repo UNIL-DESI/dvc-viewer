@@ -48,3 +48,6 @@ fake_output.txt
 
 
 
+
+# Cluster-CI run logs
+.cluster-ci-logs/

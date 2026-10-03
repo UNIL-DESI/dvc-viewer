@@ -280,7 +280,7 @@ def detect_running_stage(
 
                 return True, running_stage, live_pid
 
-    # Priority 3: Fallback to pgrep
+    # Priority 3: Fallback to pgrep (scoped to current project directory)
     try:
         pgrep_res = subprocess.run(["pgrep", "-f", "dvc repro"], capture_output=True, text=True, timeout=2)
         if pgrep_res.returncode == 0:
@@ -288,7 +288,12 @@ def detect_running_stage(
                 if line.strip().isdigit():
                     pid = int(line.strip())
                     if pid != os.getpid() and is_dvc_process_alive(pid):
-                        return True, None, pid
+                        try:
+                            proc_cwd = Path(f"/proc/{pid}/cwd").resolve()
+                            if proc_cwd == Path(project_dir).resolve():
+                                return True, None, pid
+                        except Exception:
+                            pass
     except (subprocess.TimeoutExpired, OSError):
         pass
 
